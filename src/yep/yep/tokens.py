@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Union
+from typing import Optional, Union
 
 class TokenType(str, Enum):
     # Single Character tokens
@@ -10,20 +10,20 @@ class TokenType(str, Enum):
     RIGHT_BRACE = '}'
     COMMA = ','
     DOT = '.'
-    MINUS = ','
+    MINUS = '-'
     PLUS = '+'
     SEMICOLON = ';'
     SLASH = '/'
     STAR = '*'
     BANG = '!'
-    BANG_EQUAL = '!='
     EQUAL = '='
-
-    # 1-2 character tokens
-    EQUAL_EQUAL = '=='
-    GREATER = '>'
-    GREATER_EQUAL = '>='
     LESS = '<'
+    GREATER = '>'
+
+    # 2 character tokens
+    BANG_EQUAL = '!='
+    EQUAL_EQUAL = '=='
+    GREATER_EQUAL = '>='
     LESS_EQUAL = '<='
 
     # Literals
@@ -49,10 +49,19 @@ class TokenType(str, Enum):
     VAR = 'var'
     WHILE = 'while'
 
+SINGLE_CHARACTER_TOKENS = '(){},.-+;/*!=<>' # A concatenation of all possible single character tokens.
+
 @dataclass
 class Token:
     token_type: TokenType
     lexeme: str # The value of this token, the string of characters from the original source.
-    literal: Union[str, int, float] # The value this translates to.
     line: int # Line number where this token was found
-    pos: int # Character number within the line
+    col: int # Character number within the line
+    literal: Optional[Union[str, int, float]] = None # The value this translates to.
+
+def make_string(s: str):
+    """Convenience function for making a literal string."""
+    return Token(token_type = TokenType.STRING,
+                 lexeme=s,
+                 literal=s)
+
