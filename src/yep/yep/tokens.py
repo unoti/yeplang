@@ -49,8 +49,13 @@ class TokenType(str, Enum):
     VAR = 'var'
     WHILE = 'while'
 
-SINGLE_CHARACTER_TOKENS = '(){},.-+;/*!=<>' # A concatenation of all possible single character tokens.
-TWO_CHARACTER_TOKENS = ['!=', '==', '>=', '<=']
+_LITERAL_TYPES = ['ident', 'string', 'num'] # These are in the TokenType enum but are not reserved words.
+
+# All token types sorted by length, with the longest ones first.
+# We put the long tokens first for the concept of "maximal munch"--
+# when it's ambiguous whether '<=' should be interpreted as ['<','='] vs ['<='] we prefer the bigger one.
+# We exclude the literal types here because those are internal identifiers for the enum and not reserved words.
+SORTED_TOKEN_TYPES = sorted([tt for tt in TokenType if tt not in _LITERAL_TYPES], key=lambda s: -len(s))
 
 @dataclass
 class Token:
