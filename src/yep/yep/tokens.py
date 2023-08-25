@@ -49,13 +49,23 @@ class TokenType(str, Enum):
     VAR = 'var'
     WHILE = 'while'
 
-_LITERAL_TYPES = ['ident', 'string', 'num'] # These are in the TokenType enum but are not reserved words.
+OPERATOR_TYPES = set([
+    TokenType.MINUS, TokenType.PLUS, TokenType.SLASH, TokenType.STAR,
+    TokenType.BANG, TokenType.EQUAL, TokenType.LESS, TokenType.GREATER,
+    TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL, TokenType.GREATER_EQUAL,
+    TokenType.LESS_EQUAL, TokenType.IDENTIFIER, TokenType.AND, TokenType.OR
+])
+
+# Items that are in the TokenType enum which are not reserved words and should be legal to use as identifiers.
+_UNRESERVED_WORDS = [TokenType.IDENTIFIER, TokenType.STRING, TokenType.NUMBER]
 
 # All token types sorted by length, with the longest ones first.
 # We put the long tokens first for the concept of "maximal munch"--
 # when it's ambiguous whether '<=' should be interpreted as ['<','='] vs ['<='] we prefer the bigger one.
 # We exclude the literal types here because those are internal identifiers for the enum and not reserved words.
-SORTED_TOKEN_TYPES = sorted([tt for tt in TokenType if tt not in _LITERAL_TYPES], key=lambda s: -len(s))
+SORTED_TOKEN_TYPES = sorted([tt for tt in TokenType if tt not in _UNRESERVED_WORDS], key=lambda s: -len(s))
+
+LITERAL_TYPES = [TokenType.STRING, TokenType.NUMBER]
 
 @dataclass
 class Token:
@@ -65,9 +75,8 @@ class Token:
     col: int # Character number within the line
     literal: Optional[Union[str, int, float]] = None # The value this translates to.
 
-def make_string(s: str):
-    """Convenience function for making a literal string."""
-    return Token(token_type = TokenType.STRING,
-                 lexeme=s,
-                 literal=s)
-
+    def __repr__(self):
+        if self.token_type in LITERAL_TYPES:
+            return f'Token({self.token_type.value} {self.literal})'
+        else:
+            return f'Token({self.token_type.value})'
