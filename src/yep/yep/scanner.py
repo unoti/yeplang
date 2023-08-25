@@ -21,6 +21,7 @@ class Scanner:
         self._string_literal = None # Any string literal we're currently building.
         self._identifier = None # Any identifier we're currently building.
         self._pending_tokens: List[Token] = [] # The list of tokens we're emitting.
+        self.errors: List[str] = [] # Any errors encountered.
     
     def tokens(self) -> List[Token]:
         while self._pos < len(self._input):
@@ -83,15 +84,20 @@ class Scanner:
 
             # Start an identifier.
             if self._identifier is None:
+                if self._numeric_literal:
+                    self._error('Invalid numeric literal')
+
                 self._identifier = c
             else:
-                print(f'Syntax error "{c}" at line {self._line} col {self._col}')
+                self._error(f'Syntax error "{c}"')
 
             self._advance()
 
         # We have reached the end of the input.
         self._terminate_numeric_literal() # In case the source ends on a numeric literal.
         self._terminate_identifier()
+        if self._string_literal is not None:
+            self._error('String literal did not terminate')
         return self._pending_tokens
 
     def _advance(self):
@@ -132,6 +138,7 @@ class Scanner:
             num = float(self._numeric_literal)
         else:
             num = int(self._numeric_literal)
+
         token = Token(TokenType.NUMBER,
                       lexeme=self._numeric_literal,
                       literal=num,
@@ -149,4 +156,8 @@ class Scanner:
                       line=self._line, col=self._col)
         self._pending_tokens.append(token)
         self._identifier = None
-        
+
+    def _error(self, message: str):
+         """Create an error at the current position."""
+         error = f'{message} at line {self._line} col {self._col}'
+         self.errors.append(error)

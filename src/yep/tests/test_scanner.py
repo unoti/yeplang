@@ -24,10 +24,15 @@ class TestScanner(unittest.TestCase):
                             [TokenType.PRINT, (TokenType.STRING, "Hello, World!")])
     
     #*TODO: error conditions to test
-    # * unterminated string
     # * non-numerics after a number, like 123hello
 
-    def x_test_identifiers(self):
+    def test_unterminated_string(self):
+        self._expect_error('print "hello', "String literal did not terminate")
+    
+    def test_bad_numeric(self):
+        self._expect_error('var x = 123hello', 'Invalid numeric literal')
+
+    def test_identifiers(self):
         self._expectTokens('var x = 3',
                            [TokenType.VAR, (TokenType.IDENTIFIER, 'x'), TokenType.EQUAL, (TokenType.NUMBER, 3)])
 
@@ -75,3 +80,14 @@ class TestScanner(unittest.TestCase):
                     self.fail(f"We don't have a have to verify token type {expected_token_type}")
         self.assertEqual(len(expectations), len(tokens), f'We should have got back {len(expectations)} tokens')
         return tokens
+
+    def _expect_error(self, input: str, error_contains: str):
+        scanner = Scanner(input)
+        tokens = scanner.tokens()
+        self.assertFalse(len(scanner.errors) == 0, f'Expected an error of "{error_contains}"')
+        found = False
+        for error in scanner.errors:
+            if error_contains in error:
+                found = True
+                break
+        self.assertTrue(found, f'Expected to see an error of "{error_contains}"')
