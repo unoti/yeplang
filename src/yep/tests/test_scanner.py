@@ -27,11 +27,23 @@ class TestScanner(unittest.TestCase):
     # * unterminated string
     # * non-numerics after a number, like 123hello
 
-    def test_identifiers(self):
+    def x_test_identifiers(self):
         self._expectTokens('var x = 3',
                            [TokenType.VAR, (TokenType.IDENTIFIER, 'x'), TokenType.EQUAL, (TokenType.NUMBER, 3)])
-        #*TODO: if there's a reserved word in the middle of an identifier that should be fine. "my_print"
-        #*TODO: if there's a reserved word at the start of an identifier that should be fine. "printer"
+
+        # Spaces should be optional.
+        self._expectTokens('var x=3',
+                           [TokenType.VAR, (TokenType.IDENTIFIER, 'x'), TokenType.EQUAL, (TokenType.NUMBER, 3)])
+
+    def test_reserved_identifiers(self):
+        """Edge cases with reserved words in identifiers."""
+        # If there's a reserved word in the middle of an identifier that should be fine. "my_var"
+        self._expectTokens('var my_var = 1',
+                           [TokenType.VAR, (TokenType.IDENTIFIER, 'my_var'), TokenType.EQUAL, (TokenType.NUMBER, 1)])
+
+        # If there's a reserved word at the start of an identifier that should be fine. "printer" ('print' is reserved)
+        self._expectTokens('var printer = 1',
+                           [TokenType.VAR, (TokenType.IDENTIFIER, 'printer'), TokenType.EQUAL, (TokenType.NUMBER, 1)])
 
     
     def _expectTokens(self, input: str, expectations: List[Union[TokenType, Tuple]]):

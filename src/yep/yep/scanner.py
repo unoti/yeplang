@@ -7,7 +7,8 @@ from yep.tokens import (
     TokenType,
 )
 
-_ALLOWED_IN_IDENTIFIER = '_' # Extra characters besides alphanumerics that are allowed in identifiers.
+# Characters allowed in identifiers.
+_ALLOWED_IN_IDENTIFIER = string.ascii_letters + string.digits + '_'
 
 class Scanner:
     def __init__(self, input: str):
@@ -53,11 +54,8 @@ class Scanner:
                 continue
 
             # Continue an identifier.
-            if self._identifier is not None:
-                if c.isalnum() or c in _ALLOWED_IN_IDENTIFIER:
-                    self._identifier += c
-                else:
-                    print(f'Illegal character "{c}" in identifier at line {self._line} col {self._col}')
+            if self._identifier is not None and (c in _ALLOWED_IN_IDENTIFIER):
+                self._identifier += c
                 self._advance()
                 continue
 
@@ -113,6 +111,14 @@ class Scanner:
         have = self._input[self._pos: self._pos + len(s)] # The input we have at this position to the desired length.
         if have != s:
             return False
+        
+        if s.isalnum():
+            # When matching against reserved words, we must verify that there is not more letters afterwards
+            # which would make it no longer a reserved word. For example 'variable' is not the reserved word 'var'.
+            trailing_char = self._input[self._pos + len(s): self._pos + len(s) + 1]
+            if trailing_char in _ALLOWED_IN_IDENTIFIER:
+                return False
+
         for i in range(len(s)):
             self._advance()
         return True
