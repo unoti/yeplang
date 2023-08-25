@@ -9,21 +9,29 @@ class TestScanner(unittest.TestCase):
         self.diagnostic_output = False
         #self.diagnostic_output = True
 
-    def x_test_scanner_simple(self):
+    def test_scanner_simple(self):
         self._expectTokens('+ -', [TokenType.PLUS, TokenType.MINUS])
         self._expectTokens('> >= < <=', [TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL])
     
-    def x_test_numeric_literals(self):
+    def test_numeric_literals(self):
         self._expectTokens('print 1 + 2',
                             [TokenType.PRINT, (TokenType.NUMBER, 1), TokenType.PLUS, (TokenType.NUMBER, 2)])
         self._expectTokens('print 123 + 456.7',
                             [TokenType.PRINT, (TokenType.NUMBER, 123), TokenType.PLUS, (TokenType.NUMBER, 456.7)])
 
-    def test_scanner1(self):
+    def test_string_literals(self):
         self._expectTokens('print "Hello, World!"',
                             [TokenType.PRINT, (TokenType.STRING, "Hello, World!")])
     
-    #*TODO: verify we get an error on an unterminated string
+    #*TODO: error conditions to test
+    # * unterminated string
+    # * non-numerics after a number, like 123hello
+
+    def test_identifiers(self):
+        self._expectTokens('var x = 3',
+                           [TokenType.VAR, (TokenType.IDENTIFIER, 'x'), TokenType.EQUAL, (TokenType.NUMBER, 3)])
+        #*TODO: if there's a reserved word in the middle of an identifier that should be fine. "my_print"
+        #*TODO: if there's a reserved word at the start of an identifier that should be fine. "printer"
 
     
     def _expectTokens(self, input: str, expectations: List[Union[TokenType, Tuple]]):
@@ -45,7 +53,13 @@ class TestScanner(unittest.TestCase):
             if isinstance(expected_item, TokenType):
                 self.assertEqual(expected_item, token.token_type, f'For token number {seq} we expected {expected_item}')
             else:
-                #*TODO: verify literals here.
-                pass
+                expected_token_type, expected_value = expected_item
+                self.assertEqual(expected_token_type, token.token_type, f'For token {seq} we expected {expected_token_type}')
+                if token.token_type in (TokenType.NUMBER, TokenType.STRING):
+                    self.assertEqual(expected_value, token.literal, f'For token {seq} we expected {expected_value}')
+                elif token.token_type == TokenType.IDENTIFIER:
+                    self.assertEqual(expected_value, token.lexeme, f'For token {seq} unexpected identifier')
+                else:
+                    self.fail(f"We don't have a have to verify token type {expected_token_type}")
         self.assertEqual(len(expectations), len(tokens), f'We should have got back {len(expectations)} tokens')
         return tokens

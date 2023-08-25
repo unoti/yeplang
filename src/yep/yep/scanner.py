@@ -7,6 +7,8 @@ from yep.tokens import (
     TokenType,
 )
 
+_ALLOWED_IN_IDENTIFIER = '_' # Extra characters besides alphanumerics that are allowed in identifiers.
+
 class Scanner:
     def __init__(self, input: str):
         self._input = input
@@ -16,11 +18,12 @@ class Scanner:
         self._col = 1 # Column number within the line.
         self._numeric_literal = '' # Any numeric literal we're currently building, stored as a string.
         self._string_literal = None # Any string literal we're currently building.
-        self._pending_tokens = []
+        self._identifier = None # Any identifier we're currently building.
+        self._pending_tokens: List[Token] = [] # The list of tokens we're emitting.
     
     def tokens(self) -> List[Token]:
         while self._pos < len(self._input):
-            c = self._input[self._pos]
+            c: str = self._input[self._pos]
 
             if c == '"':
                 if self._string_literal is None:
@@ -37,18 +40,30 @@ class Scanner:
                 self._advance()
                 continue
 
+            # Continue an existing string literal.
             if not self._string_literal is None:
                 self._string_literal += c
                 self._advance()
                 continue
 
-            if str.isdigit(c) or (c=='.' and self._numeric_literal):
-                self._numeric_literal += c
+            if c in string.whitespace:
+                self._terminate_identifier()
+                self._terminate_numeric_literal()
                 self._advance()
                 continue
 
-            if c in string.whitespace:
-                self._terminate_numeric_literal()
+            # Continue an identifier.
+            if self._identifier is not None:
+                if c.isalnum() or c in _ALLOWED_IN_IDENTIFIER:
+                    self._identifier += c
+                else:
+                    print(f'Illegal character "{c}" in identifier at line {self._line} col {self._col}')
+                self._advance()
+                continue
+
+            # Continue an existing numeric literal, or start a new one.
+            if str.isdigit(c) or (c=='.' and self._numeric_literal):
+                self._numeric_literal += c
                 self._advance()
                 continue
 
@@ -64,12 +79,21 @@ class Scanner:
                     break
             if token:
                 self._terminate_numeric_literal()
+                self._terminate_identifier()
                 self._pending_tokens.append(token)
                 continue
-    
-            print(f'Unknown token at line {self._line} column {self._col} input={self._input} c="{c}"')
+
+            # Start an identifier.
+            if self._identifier is None:
+                self._identifier = c
+            else:
+                print(f'Syntax error "{c}" at line {self._line} col {self._col}')
+
             self._advance()
+
+        # We have reached the end of the input.
         self._terminate_numeric_literal() # In case the source ends on a numeric literal.
+        self._terminate_identifier()
         return self._pending_tokens
 
     def _advance(self):
@@ -110,3 +134,13 @@ class Scanner:
                     )
         self._pending_tokens.append(token)
         self._numeric_literal = '' # We no longer have a numeric literal pending.
+
+    def _terminate_identifier(self):
+        """If we have been building an identifier then emit it now."""
+        if self._identifier is None:
+            return
+        token = Token(TokenType.IDENTIFIER, lexeme=self._identifier,
+                      line=self._line, col=self._col)
+        self._pending_tokens.append(token)
+        self._identifier = None
+        
