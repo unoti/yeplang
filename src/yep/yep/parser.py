@@ -21,10 +21,11 @@ class Parser:
         self._operator_stack: List[OperatorNode] = []
 
     def parse(self) -> List[AstNode]:
+        print(f'parse tokens={self.tokens}')
         while self._pos < len(self.tokens) - 1:
             self._pos += 1
-            print(f'tokens={self.tokens} pos={self._pos}')
             token = self.tokens[self._pos]
+            print(f'parse loop token={token} pos={self._pos}')
 
             if token.token_type == TokenType.NUMBER:
                 self._value_queue.append(NumberNode(value = token.literal))
@@ -34,14 +35,15 @@ class Parser:
                 self._operator_stack.append(OperatorNode(operator=token.token_type))
                 continue
 
-        print('end of parse')
-        print('value stack: ', self._value_queue)
-        print('operator stack: ', self._operator_stack)
         self._terminate_expression()
         return self._nodes
 
     def _terminate_expression(self):
         """Finish any expression that was pending."""
+        print('terminate_expression')
+        print('value stack: ', self._value_queue)
+        print('operator stack: ', self._operator_stack)
+
         while (len(self._operator_stack)):
             operator = self._operator_stack.pop()
             # Connect the operator to its operands.
