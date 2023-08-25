@@ -50,6 +50,7 @@ class TokenType(str, Enum):
     WHILE = 'while'
 
 SINGLE_CHARACTER_TOKENS = '(){},.-+;/*!=<>' # A concatenation of all possible single character tokens.
+TWO_CHARACTER_TOKENS = ['!=', '==', '>=', '<=']
 
 @dataclass
 class Token:

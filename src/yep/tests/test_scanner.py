@@ -6,11 +6,12 @@ from yep.tokens import Token, TokenType
 
 class TestScanner(unittest.TestCase):
     def setUp(self):
-        self.diagnostic_output = False
-        #self.diagnostic_output = True
+        #self.diagnostic_output = False
+        self.diagnostic_output = True
 
-    def test_scanner_single(self):
+    def test_scanner_simple(self):
         self._expectTokens('+ -', [TokenType.PLUS, TokenType.MINUS])
+        self._expectTokens('> >= < <=', [TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL])
 
     # def x_test_scanner1(self):
     #     tokens = list(Scanner('print "Hello, World!"').tokens())
